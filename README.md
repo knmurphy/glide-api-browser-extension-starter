@@ -1,6 +1,6 @@
 # Glide API Browser Extension Starter
 
-This is a starter project for building a browser extension that interacts with the Glide API. I hope you use it to build something amazing! I made it because browser extensions are super useful but way to difficult to build without some starter code.
+This is a starter project for building a browser extension that interacts with the Glide API. I hope you use it to build something amazing! I made it because browser extensions are super useful but way too tedious for most to build without some starter code.
 
 ## Features (Coming Soon)
 
