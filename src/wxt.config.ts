@@ -15,4 +15,11 @@ export default defineConfig({
     }
   },
   modules: ['@wxt-dev/module-vue'],
+  vite: () => ({
+    define: {
+      'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development'),
+      'process.env': '{}',
+      'process.versions': '{}'
+    }
+  })
 });
