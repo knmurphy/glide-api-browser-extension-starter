@@ -157,106 +157,37 @@ async function handleSubmit() {
 
 <style>
 .container {
-  padding: 1.5rem;
   min-width: 320px;
   max-width: 400px;
-  background-color: #1a1a1a;
-}
-
-h2 {
-  color: #fff;
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 1.5rem;
 }
 
 .form {
   display: flex;
   flex-direction: column;
-  gap: 1.25rem;
-}
-
-.form-group {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-label {
-  font-weight: 500;
-  color: #e5e7eb;
-  text-align: left;
-  align-self: flex-start;
-  font-size: 0.875rem;
-}
-
-.form-input {
-  padding: 0.75rem;
-  border: 1px solid #333;
-  background-color: #262626;
-  color: #fff;
-  border-radius: 0.5rem;
-  font-size: 0.875rem;
-  transition: all 0.2s;
-}
-
-.form-input:focus {
-  outline: none;
-  border-color: #8b5cf6;
-  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
-}
-
-.form-input::placeholder {
-  color: #6b7280;
-}
-
-.submit-button {
-  margin-top: 1rem;
-  padding: 0.75rem 1.5rem;
-  background-color: #8b5cf6;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 500;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background-color 0.2s;
-}
-
-.submit-button:hover {
-  background-color: #7c3aed;
-}
-
-.submit-button:active {
-  background-color: #6d28d9;
-}
-
-.submit-button:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
+  gap: var(--spacing-md);
 }
 
 .error {
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   background-color: rgba(239, 68, 68, 0.1);
   border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 0.5rem;
-  color: #ef4444;
+  border-radius: 8px;
+  color: var(--error-color);
 }
 
 .success {
-  padding: 0.75rem;
-  margin-bottom: 1rem;
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-md);
   background-color: rgba(34, 197, 94, 0.1);
   border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 0.5rem;
-  color: #22c55e;
+  border-radius: 8px;
+  color: var(--success-color);
 }
 
 .message {
   text-align: center;
-  color: #9ca3af;
-  padding: 1rem;
+  color: var(--help-text-color);
+  padding: var(--spacing-md);
 }
 </style>
