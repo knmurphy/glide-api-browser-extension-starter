@@ -28,6 +28,50 @@ The extension will be loaded in development mode. You can now make changes to th
 - Parse Glide table configuration code automatically
 - Secure storage of API tokens
 
+## Usage Guide
+
+### First Time Setup
+
+When you first open the extension, you'll see the welcome screen:
+
+![First Start](readme-images/first-start.png)
+
+Click "Open Options" to configure your Glide tables.
+
+### Adding Table Configurations
+
+In the options page, you can add new table configurations:
+
+![Add Configuration](readme-images/add-config.png)
+
+Fill in your API configuration details:
+
+![API Configuration Details](readme-images/api-config-details.png)
+
+You can add multiple configurations for different tables:
+
+![Multiple Configurations](readme-images/add-multi-configs.png)
+
+### Using the Extension
+
+1. Click the extension icon and choose your configuration:
+
+![Choose Configuration](readme-images/choose-config.png)
+
+2. The form will be automatically created based on your table structure:
+
+![Auto Created Form](readme-images/auto-created-form.png)
+
+3. Fill in the form and submit. You'll see a success message when the row is added:
+
+![Success Message](readme-images/success-add-row.png)
+
+### Managing Configurations
+
+You can delete configurations you no longer need:
+
+![Delete Configuration](readme-images/delete-config.png)
+
 ## Setup
 
 1. Navigate to the `src` directory:
@@ -47,38 +91,6 @@ pnpm dev
 ```
 
 (Support for Firefox coming soon, I haven't had a chance to test it yet)
-
-## Usage
-
-1. Click on the extension icon to open the popup
-2. First time? Click "Open Options" to configure your Glide tables
-3. In the options page:
-   - You can paste your Glide table configuration code directly, or
-   - Fill in the fields manually:
-     - Configuration Name (for your reference)
-     - API Token (your Glide API token)
-     - App ID (your Glide app ID)
-     - Table ID (your Glide table ID)
-     - Column Configuration (JSON format of your table columns)
-
-Example column configuration:
-```json
-{
-  "name": {
-    "type": "string",
-    "name": "Name"
-  },
-  "description": {
-    "type": "string",
-    "name": "Description"
-  }
-}
-```
-
-4. Once configured, use the popup to:
-   - Select your saved configuration
-   - Fill in the form fields
-   - Click "Add Row" to submit the data
 
 ## Development
 
