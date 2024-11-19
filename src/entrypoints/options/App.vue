@@ -66,7 +66,6 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { storage } from 'wxt/storage'
 
 interface Settings {
   apiToken: string
@@ -88,7 +87,7 @@ const status = ref<{ type: 'success' | 'error'; message: string } | null>(null)
 
 onMounted(async () => {
   // Load saved settings
-  const savedSettings = await storage.local.get(['apiToken', 'appId', 'tableId', 'columns'])
+  const savedSettings = await chrome.storage.local.get(['apiToken', 'appId', 'tableId', 'columns'])
   settings.value = {
     apiToken: savedSettings.apiToken || '',
     appId: savedSettings.appId || '',
@@ -100,12 +99,22 @@ onMounted(async () => {
 const validateColumns = (columnsStr: string): boolean => {
   if (!columnsStr) return true // Empty is valid
   try {
+    console.log('Input:', columnsStr)
     // Convert the more relaxed format to strict JSON
     const jsonStr = `{${columnsStr}}`
-      .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":') // Add quotes to property names
-      .replace(/\s*([{,])\s*/g, '$1') // Remove spaces around braces and commas
+    console.log('With braces:', jsonStr)
+    
+    const withQuotedProps = jsonStr
+      .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')
+    console.log('With quoted props:', withQuotedProps)
+    
+    const cleaned = withQuotedProps
+      .replace(/\s*([{,])\s*/g, '$1')
+    console.log('Cleaned:', cleaned)
       
-    const parsed = JSON.parse(jsonStr)
+    const parsed = JSON.parse(cleaned)
+    console.log('Parsed:', parsed)
+    
     if (typeof parsed !== 'object' || parsed === null) {
       throw new Error('Columns must be an object')
     }
@@ -122,6 +131,7 @@ const validateColumns = (columnsStr: string): boolean => {
     settings.value.columns = JSON.stringify(parsed)
     return true
   } catch (error) {
+    console.error('Validation error:', error)
     columnsError.value = 'Invalid format. Example: name: { type: "string", name: "Name" }'
     return false
   }
@@ -137,7 +147,7 @@ const saveSettings = async () => {
 
   saving.value = true
   try {
-    await storage.local.set({
+    await chrome.storage.local.set({
       apiToken: settings.value.apiToken,
       appId: settings.value.appId,
       tableId: settings.value.tableId,
