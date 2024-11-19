@@ -1,72 +1,105 @@
 :root {
-  --primary-color: #4f46e5;
+  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color-scheme: light dark;
+  --primary-color: #646cff;
+  --hover-color: #535bf2;
   --error-color: #ef4444;
   --success-color: #22c55e;
+  
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
   margin: 0;
-  padding: 20px;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  background-color: #f9fafb;
+  padding: 10px;
+  height: 550px;
+  background-color: #ffffff;
+  color: #213547;
+  overflow: hidden;
+}
+
+html {
+  width: 100%;
+  height: 550px;
+  overflow: hidden;
 }
 
 .container {
-  max-width: 600px;
+  width: 500px;
   margin: 0 auto;
-  background-color: white;
-  padding: 2rem;
+  background-color: #f9f9f9;
+  padding: 1.5rem;
   border-radius: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
 }
 
 h1 {
-  color: #111827;
+  color: #213547;
   margin-bottom: 1.5rem;
+  font-size: 2em;
+  line-height: 1.1;
 }
 
 .form-group {
   margin-bottom: 1.5rem;
+  text-align: left;
 }
 
 label {
   display: block;
   margin-bottom: 0.5rem;
-  color: #374151;
+  color: #213547;
   font-weight: 500;
 }
 
-input {
-  width: 100%;
-  padding: 0.5rem;
+input, textarea {
+  width: calc(100% - 16px);
+  padding: 0.4em 0.8em;
   border: 1px solid #d1d5db;
   border-radius: 4px;
-  font-size: 1rem;
-  transition: border-color 0.15s ease-in-out;
+  font-size: 1em;
+  font-family: inherit;
+  background-color: #ffffff;
+  transition: border-color 0.25s;
+  box-sizing: border-box;
+  margin: 0 8px;
 }
 
-input:focus {
+input:focus, textarea:focus {
   outline: none;
   border-color: var(--primary-color);
-  box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.1);
 }
 
-.button {
+button {
+  border-radius: 8px;
+  border: 1px solid transparent;
+  padding: 0.6em 1.2em;
+  font-size: 1em;
+  font-weight: 500;
+  font-family: inherit;
   background-color: var(--primary-color);
   color: white;
-  padding: 0.5rem 1rem;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
   cursor: pointer;
-  transition: background-color 0.15s ease-in-out;
+  transition: background-color 0.25s;
 }
 
-.button:hover {
-  background-color: #4338ca;
+button:hover {
+  background-color: var(--hover-color);
 }
 
-.button:disabled {
+button:focus,
+button:focus-visible {
+  outline: 4px auto -webkit-focus-ring-color;
+}
+
+button:disabled {
   background-color: #9ca3af;
   cursor: not-allowed;
 }
@@ -86,7 +119,7 @@ input:focus {
 .status {
   margin-top: 1rem;
   padding: 0.75rem;
-  border-radius: 4px;
+  border-radius: 8px;
   font-size: 0.875rem;
 }
 
@@ -112,4 +145,38 @@ input:focus {
   padding: 0.125rem 0.25rem;
   border-radius: 0.25rem;
   font-family: monospace;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: rgba(255, 255, 255, 0.87);
+    background-color: #242424;
+  }
+  
+  body {
+    background-color: #242424;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  .container {
+    background-color: #1a1a1a;
+  }
+  
+  h1, label {
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  input, textarea {
+    background-color: #1a1a1a;
+    border-color: #3f3f3f;
+    color: rgba(255, 255, 255, 0.87);
+  }
+  
+  .help-text {
+    color: #9ca3af;
+  }
+  
+  .help-text code {
+    background-color: #2d2d2d;
+  }
 }
