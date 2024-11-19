@@ -15,6 +15,7 @@
     "postinstall": "wxt prepare"
   },
   "dependencies": {
+    "@glideapps/tables": "^1.0.21",
     "vue": "^3.5.12"
   },
   "devDependencies": {

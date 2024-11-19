@@ -10,8 +10,20 @@
           <h3>{{ config.name }}</h3>
           <div class="config-actions">
             <button @click="editConfig(index)" class="secondary">Edit</button>
-            <button @click="deleteConfig(index)" class="danger">Delete</button>
+            <button @click="showDeleteConfirm(index)" class="danger">Delete</button>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Delete Confirmation Dialog -->
+    <div v-if="deleteDialog.show" class="modal-overlay">
+      <div class="modal">
+        <h3>Delete Configuration</h3>
+        <p>Are you sure you want to delete this configuration?</p>
+        <div class="button-group">
+          <button @click="confirmDelete" class="danger">Delete</button>
+          <button @click="cancelDelete" class="secondary">Cancel</button>
         </div>
       </div>
     </div>
@@ -132,6 +144,7 @@ const glideCode = ref('')
 const status = ref(null)
 const isEditing = ref(false)
 const editingIndex = ref(-1)
+const deleteDialog = ref({ show: false, index: -1 })
 
 onMounted(async () => {
   try {
@@ -278,6 +291,7 @@ async function saveConfig() {
     }
     
     resetForm()
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   } catch (error) {
     console.error('Options: Save error:', error)
     status.value = {
@@ -297,21 +311,48 @@ function editConfig(index) {
   editingIndex.value = index
 }
 
-function deleteConfig(index) {
-  if (confirm('Are you sure you want to delete this configuration?')) {
-    // Ensure savedConfigs is an array before splicing
-    if (!Array.isArray(savedConfigs.value)) {
-      savedConfigs.value = []
-      return
-    }
-    
-    savedConfigs.value.splice(index, 1)
-    browser.storage.local.set({ glideConfigs: savedConfigs.value })
-    status.value = {
-      type: 'success',
-      message: 'Configuration deleted successfully!'
-    }
+function showDeleteConfirm(index) {
+  console.log('Showing delete confirmation for index:', index)
+  deleteDialog.value = { show: true, index }
+}
+
+function confirmDelete() {
+  console.log('Delete confirmed for index:', deleteDialog.value.index)
+  const index = deleteDialog.value.index
+  
+  // Ensure savedConfigs is an array before splicing
+  if (!Array.isArray(savedConfigs.value)) {
+    console.warn('savedConfigs is not an array:', savedConfigs.value)
+    savedConfigs.value = []
+    return
   }
+  
+  savedConfigs.value.splice(index, 1)
+  console.log('Configs after splice:', JSON.stringify(savedConfigs.value, null, 2))
+  
+  browser.storage.local.set({ glideConfigs: savedConfigs.value })
+    .then(() => {
+      console.log('Storage updated successfully')
+      status.value = {
+        type: 'success',
+        message: 'Configuration deleted successfully!'
+      }
+    })
+    .catch(error => {
+      console.error('Failed to update storage:', error)
+      status.value = {
+        type: 'error',
+        message: 'Failed to delete configuration'
+      }
+    })
+    .finally(() => {
+      deleteDialog.value.show = false
+    })
+}
+
+function cancelDelete() {
+  console.log('Delete cancelled')
+  deleteDialog.value.show = false
 }
 
 function resetForm() {
@@ -358,6 +399,38 @@ function resetForm() {
   gap: var(--spacing-sm);
 }
 
+.config-actions button {
+  padding: var(--spacing-xs) var(--spacing-md);
+  font-size: var(--text-sm);
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+/* Edit button - more prominent */
+.config-actions button.secondary {
+  background-color: var(--primary-color);
+  border: 1px solid var(--primary-color);
+  color: var(--text-color-light);
+}
+
+.config-actions button.secondary:hover {
+  background-color: var(--hover-color);
+  border-color: var(--hover-color);
+}
+
+/* Delete button - subtle outline style */
+.config-actions button.danger {
+  background-color: transparent;
+  border: 1px solid var(--error-color);
+  color: var(--error-color);
+}
+
+.config-actions button.danger:hover {
+  background-color: var(--error-color);
+  color: var(--text-color-light);
+}
+
 .button-group {
   display: flex;
   gap: var(--spacing-sm);
@@ -384,13 +457,86 @@ button.danger:hover {
   border-color: #E63535;
 }
 
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal {
+  background: var(--container-bg);
+  color: var(--text-color);
+  padding: var(--spacing-xl);
+  border-radius: 12px;
+  box-shadow: var(--shadow-md);
+  max-width: 400px;
+  width: 90%;
+  border: 1px solid var(--border-color);
+}
+
+.modal h3 {
+  margin-top: 0;
+  margin-bottom: var(--spacing-md);
+  color: var(--text-color);
+  font-size: var(--text-lg);
+  font-weight: 600;
+}
+
+.modal p {
+  margin-bottom: var(--spacing-lg);
+  color: var(--text-secondary);
+  font-size: var(--text-md);
+}
+
+.modal .button-group {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+}
+
 @media (prefers-color-scheme: dark) {
   .config-item {
     background-color: var(--container-bg-dark);
   }
-  
-  button.secondary {
+
+  .modal {
+    background-color: var(--container-bg-dark);
+    border-color: var(--border-color-dark);
+  }
+
+  .modal h3 {
     color: var(--text-color-light);
+  }
+
+  .modal p {
+    color: var(--help-text-color-dark);
+  }
+
+  .modal .button-group button.secondary {
+    background-color: var(--bg-color-dark);
+    border-color: var(--border-color-dark);
+    color: var(--text-color-light);
+  }
+
+  .modal .button-group button.secondary:hover {
+    border-color: var(--text-secondary);
+  }
+
+  .modal .button-group button.danger {
+    background-color: var(--error-color);
+    border-color: var(--error-color);
+    color: var(--text-color-light);
+  }
+
+  .modal .button-group button.danger:hover {
+    opacity: 0.9;
   }
 }
 </style>
