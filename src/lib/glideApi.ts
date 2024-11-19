@@ -1,7 +1,7 @@
 import * as glide from "@glideapps/tables"
 
 interface GlideColumn {
-  type: 'string' | 'number' | 'boolean' | 'date';
+  type: string;
   name: string;
 }
 
@@ -13,36 +13,21 @@ interface GlideTableConfig {
 }
 
 class GlideApiClient {
-  private apiKey: string;
-  private appId: string;
-  private tableId: string;
-  private baseUrl: string = 'https://api.glideapp.io/api/v1/tables';
+  private table: any;
 
   constructor(config: GlideTableConfig) {
-    this.apiKey = config.apiToken;
-    this.appId = config.appId;
-    this.tableId = config.tableId;
-  }
-
-  private getTableUrl(): string {
-    return `${this.baseUrl}/${this.appId}/${this.tableId}`;
+    // Create the Glide table instance using their SDK
+    this.table = glide.table({
+      token: config.apiToken,
+      app: config.appId,
+      table: config.tableId,
+      columns: JSON.parse(typeof config.columns === 'string' ? config.columns : JSON.stringify(config.columns))
+    });
   }
 
   async getRows(options: { limit?: number; offset?: number } = {}) {
     try {
-      const response = await fetch(this.getTableUrl(), {
-        method: 'GET',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-        },
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to get rows')
-      }
-
-      return await response.json();
+      return await this.table.fetch();
     } catch (error) {
       console.error('Failed to get rows:', error);
       throw error;
@@ -51,27 +36,14 @@ class GlideApiClient {
 
   async addRow(data: Record<string, any>) {
     try {
-      console.log('Adding row with data:', data);
-      const cleanData = Object.entries(data).reduce((acc, [key, value]) => {
-        acc[key] = value === '' ? null : value;
-        return acc;
-      }, {} as Record<string, any>);
-      const response = await fetch(this.getTableUrl(), {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${this.apiKey}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(cleanData),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.message || 'Failed to add row')
-      }
-      console.log('Row added successfully');
+      console.log('API Client - Adding row with data:', data);
+      
+      // Use the Glide SDK to add the row
+      const result = await this.table.add(data);
+      console.log('API Client - Row added successfully:', result);
+      return result;
     } catch (error) {
-      console.error('Failed to add row:', error);
+      console.error('API Client - Failed to add row:', error);
       throw error;
     }
   }

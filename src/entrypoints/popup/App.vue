@@ -73,9 +73,16 @@ onMounted(async () => {
   try {
     console.log('Popup: Loading configs from storage')
     const result = await browser.storage.local.get('glideConfigs')
-    console.log('Popup: Loaded configs:', result)
-    configs.value = Array.isArray(result.glideConfigs) ? result.glideConfigs : []
-    console.log('Popup: Configs after load:', configs.value)
+    console.log('Popup: Loaded configs:', JSON.stringify(result, null, 2))
+    
+    // Convert object to array if needed
+    let loadedConfigs = result.glideConfigs || []
+    if (loadedConfigs && typeof loadedConfigs === 'object' && !Array.isArray(loadedConfigs)) {
+      loadedConfigs = Object.values(loadedConfigs)
+    }
+    
+    configs.value = Array.isArray(loadedConfigs) ? loadedConfigs : []
+    console.log('Popup: Configs after load:', JSON.stringify(configs.value, null, 2))
   } catch (error) {
     console.error('Popup: Failed to load configs:', error)
     configs.value = []
@@ -83,10 +90,14 @@ onMounted(async () => {
 
   // Listen for storage changes
   browser.storage.onChanged.addListener((changes) => {
-    console.log('Popup: Storage changed:', changes)
+    console.log('Popup: Storage changed:', JSON.stringify(changes, null, 2))
     if (changes.glideConfigs) {
-      configs.value = Array.isArray(changes.glideConfigs.newValue) ? changes.glideConfigs.newValue : []
-      console.log('Popup: Updated configs:', configs.value)
+      let newConfigs = changes.glideConfigs.newValue || []
+      if (newConfigs && typeof newConfigs === 'object' && !Array.isArray(newConfigs)) {
+        newConfigs = Object.values(newConfigs)
+      }
+      configs.value = Array.isArray(newConfigs) ? newConfigs : []
+      console.log('Popup: Updated configs:', JSON.stringify(configs.value, null, 2))
       
       // Reset selection if the current config was deleted
       if (selectedConfig.value && !configs.value.length) {
@@ -101,7 +112,7 @@ onMounted(async () => {
 function loadSelectedConfig() {
   console.log('Popup: Loading selected config, index:', selectedConfigIndex.value)
   selectedConfig.value = configs.value[selectedConfigIndex.value]
-  console.log('Popup: Selected config:', selectedConfig.value)
+  console.log('Popup: Selected config:', JSON.stringify(selectedConfig.value, null, 2))
   formData.value = {}
   status.value = null
 }
@@ -119,20 +130,55 @@ function getInputType(columnType: string): string {
 }
 
 async function submitForm() {
+  if (!selectedConfig.value) {
+    status.value = {
+      type: 'error',
+      message: 'Please select a configuration first.'
+    }
+    return
+  }
+
   submitting.value = true
-  status.value = null
-  
+  status.value = {
+    type: 'info',
+    message: 'Submitting...'
+  }
+
   try {
     const config = selectedConfig.value
-    const apiConfig: GlideTableConfig = {
-      apiToken: config.apiKey,
+    
+    // Log config details safely
+    console.log('Config details:', {
+      name: config.name,
       appId: config.appId,
       tableId: config.tableId,
-      columns: parsedColumns.value
+      hasToken: !!config.apiToken,
+      tokenLength: config.apiToken?.length,
+      columns: typeof config.columns
+    })
+
+    // Create API config with columns
+    const apiConfig = {
+      apiToken: config.apiToken,
+      appId: config.appId,
+      tableId: config.tableId,
+      columns: config.columns // Pass the columns configuration
     }
     
+    // Log API config details safely
+    console.log('API config details:', {
+      appId: apiConfig.appId,
+      tableId: apiConfig.tableId,
+      hasToken: !!apiConfig.apiToken,
+      tokenLength: apiConfig.apiToken?.length,
+      columns: typeof apiConfig.columns
+    })
+    
     const client = new GlideApiClient(apiConfig)
-    await client.addRow(formData.value)
+    console.log('Form data to submit:', formData.value)
+    
+    const result = await client.addRow(formData.value)
+    console.log('API response:', result)
     
     status.value = {
       type: 'success',
@@ -142,6 +188,7 @@ async function submitForm() {
     // Clear form
     formData.value = {}
   } catch (error) {
+    console.error('Form submission error:', error)
     status.value = {
       type: 'error',
       message: error.message || 'Failed to add row. Please try again.'

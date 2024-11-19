@@ -52,14 +52,14 @@
         </div>
 
         <div class="form-group">
-          <label for="apiKey">API Key</label>
+          <label for="apiToken">API Token</label>
           <input
-            id="apiKey"
-            v-model="currentConfig.apiKey"
+            id="apiToken"
+            v-model="currentConfig.apiToken"
             type="password"
             required
           />
-          <div class="help-text">Your Glide API key</div>
+          <div class="help-text">Your Glide API token</div>
         </div>
 
         <div class="form-group">
@@ -118,7 +118,7 @@ import { browser } from 'wxt/browser'
 const savedConfigs = ref([])
 const currentConfig = ref({
   name: '',
-  apiKey: '',
+  apiToken: '',
   appId: '',
   tableId: '',
   columns: ''
@@ -132,10 +132,16 @@ onMounted(async () => {
   try {
     console.log('Options: Loading configs from storage')
     const result = await browser.storage.local.get('glideConfigs')
-    console.log('Options: Loaded configs:', result)
-    // Ensure we always have an array
-    savedConfigs.value = Array.isArray(result.glideConfigs) ? result.glideConfigs : []
-    console.log('Options: Saved configs after load:', savedConfigs.value)
+    console.log('Options: Loaded configs:', JSON.stringify(result, null, 2))
+    
+    // Convert object to array if needed
+    let loadedConfigs = result.glideConfigs || []
+    if (loadedConfigs && typeof loadedConfigs === 'object' && !Array.isArray(loadedConfigs)) {
+      loadedConfigs = Object.values(loadedConfigs)
+    }
+    
+    savedConfigs.value = Array.isArray(loadedConfigs) ? loadedConfigs : []
+    console.log('Options: Saved configs after load:', JSON.stringify(savedConfigs.value, null, 2))
   } catch (error) {
     console.error('Options: Failed to load configs:', error)
     savedConfigs.value = []
@@ -143,10 +149,14 @@ onMounted(async () => {
 
   // Listen for storage changes
   browser.storage.onChanged.addListener((changes) => {
-    console.log('Options: Storage changed:', changes)
+    console.log('Options: Storage changed:', JSON.stringify(changes, null, 2))
     if (changes.glideConfigs) {
-      savedConfigs.value = Array.isArray(changes.glideConfigs.newValue) ? changes.glideConfigs.newValue : []
-      console.log('Options: Updated saved configs:', savedConfigs.value)
+      let newConfigs = changes.glideConfigs.newValue || []
+      if (newConfigs && typeof newConfigs === 'object' && !Array.isArray(newConfigs)) {
+        newConfigs = Object.values(newConfigs)
+      }
+      savedConfigs.value = Array.isArray(newConfigs) ? newConfigs : []
+      console.log('Options: Updated saved configs:', JSON.stringify(savedConfigs.value, null, 2))
     }
   })
 })
@@ -203,7 +213,7 @@ function parseGlideCode() {
 async function saveConfig() {
   try {
     // Make sure all required fields are filled
-    if (!currentConfig.value.name || !currentConfig.value.apiKey || 
+    if (!currentConfig.value.name || !currentConfig.value.apiToken || 
         !currentConfig.value.appId || !currentConfig.value.tableId || 
         !currentConfig.value.columns) {
       throw new Error('All fields are required')
@@ -231,13 +241,13 @@ async function saveConfig() {
     
     const newConfig = {
       name: currentConfig.value.name,
-      apiKey: currentConfig.value.apiKey,
+      apiToken: currentConfig.value.apiToken,
       appId: currentConfig.value.appId,
       tableId: currentConfig.value.tableId,
       columns: columnsStr
     }
     
-    console.log('Options: Saving new config:', newConfig)
+    console.log('Options: Saving new config:', JSON.stringify(newConfig, null, 2))
     
     // Ensure savedConfigs is an array before pushing
     if (!Array.isArray(savedConfigs.value)) {
@@ -251,8 +261,10 @@ async function saveConfig() {
       savedConfigs.value.push(newConfig)
     }
     
-    console.log('Options: About to save configs:', savedConfigs.value)
-    await browser.storage.local.set({ glideConfigs: savedConfigs.value })
+    // Ensure we're saving an array
+    const configsToSave = Array.from(savedConfigs.value)
+    console.log('Options: About to save configs:', JSON.stringify(configsToSave, null, 2))
+    await browser.storage.local.set({ glideConfigs: configsToSave })
     console.log('Options: Saved to storage successfully')
     
     status.value = {
@@ -300,7 +312,7 @@ function deleteConfig(index) {
 function resetForm() {
   currentConfig.value = {
     name: '',
-    apiKey: '',
+    apiToken: '',
     appId: '',
     tableId: '',
     columns: ''
