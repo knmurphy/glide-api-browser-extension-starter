@@ -128,10 +128,10 @@ async function handleSubmit() {
 
 <template>
   <div class="container">
-    <h2>Add New Record</h2>
+    <h2>Add New Row</h2>
     
     <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="success" class="success">Record added successfully!</div>
+    <div v-if="success" class="success">Row added successfully!</div>
 
     <form v-if="Object.keys(columns).length" @submit.prevent="handleSubmit" class="form">
       <div v-for="(config, field) in columns" :key="field" class="form-group">
@@ -145,7 +145,7 @@ async function handleSubmit() {
         >
       </div>
       <button type="submit" class="submit-button" :disabled="loading">
-        {{ loading ? 'Adding...' : 'Add Record' }}
+        {{ loading ? 'Adding...' : 'Add Row in Glide' }}
       </button>
     </form>
 
