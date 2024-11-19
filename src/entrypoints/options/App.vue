@@ -54,12 +54,13 @@ age: { type: 'number', name: 'Age' }"
         </div>
       </div>
 
-      <button type="submit" class="button" :disabled="saving">
-        {{ saving ? 'Saving...' : 'Save Settings' }}
-      </button>
-
-      <div v-if="status" :class="['status', status.type]">
-        {{ status.message }}
+      <div class="button-row">
+        <button type="submit" class="button" :disabled="saving">
+          {{ saving ? 'Saving...' : 'Save Settings' }}
+        </button>
+        <div v-if="status" :class="['status-message', status.type]">
+          {{ status.message }}
+        </div>
       </div>
     </form>
   </div>
@@ -196,3 +197,35 @@ const saveSettings = async () => {
   }
 }
 </script>
+
+<style>
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.button {
+  flex-shrink: 0;
+  width: auto;
+  min-width: 120px;
+}
+
+.status-message {
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  flex-grow: 1;
+}
+
+.status-message.success {
+  background-color: #e6ffe6;
+  color: #006600;
+  border: 1px solid #b3ffb3;
+}
+
+.status-message.error {
+  background-color: #ffe6e6;
+  color: #cc0000;
+  border: 1px solid #ffb3b3;
+}
+</style>
