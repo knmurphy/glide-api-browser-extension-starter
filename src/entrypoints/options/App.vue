@@ -19,26 +19,9 @@
     <!-- Add/Edit Configuration Form -->
     <div class="form-container">
       <h2>{{ isEditing ? 'Edit Configuration' : 'Add New Configuration' }}</h2>
-      
-      <!-- Code Import Section -->
-      <div class="form-group" v-if="!isEditing">
-        <label for="glideCode">Paste Glide Code (Optional)</label>
-        <textarea
-          id="glideCode"
-          v-model="glideCode"
-          placeholder="Paste your Glide table configuration code here..."
-          rows="8"
-        ></textarea>
-        <div class="help-text">
-          Paste your Glide table configuration code here to automatically fill the fields below.
-          The code should look like: glide.table({ app: "...", table: "...", columns: {...} })
-        </div>
-        <button type="button" @click="parseGlideCode" class="secondary">
-          Parse Code
-        </button>
-      </div>
 
       <form @submit.prevent="saveConfig">
+        <!-- 1. Configuration Name -->
         <div class="form-group">
           <label for="configName">Configuration Name</label>
           <input 
@@ -51,6 +34,7 @@
           <div class="help-text">A friendly name to identify this configuration</div>
         </div>
 
+        <!-- 2. API Token -->
         <div class="form-group">
           <label for="apiToken">API Token</label>
           <input
@@ -62,6 +46,25 @@
           <div class="help-text">Your Glide API token</div>
         </div>
 
+        <!-- 3. Paste Glide Code -->
+        <div class="form-group" v-if="!isEditing">
+          <label for="glideCode">Paste Glide Code (Optional)</label>
+          <textarea
+            id="glideCode"
+            v-model="glideCode"
+            placeholder="Paste your Glide table configuration code here..."
+            rows="8"
+          ></textarea>
+          <div class="help-text">
+            Paste your Glide table configuration code here to automatically fill the fields below.
+            The code should look like: glide.table({ app: "...", table: "...", columns: {...} })
+          </div>
+          <button type="button" @click="parseGlideCode" class="secondary">
+            Parse Code
+          </button>
+        </div>
+
+        <!-- 4. App ID -->
         <div class="form-group">
           <label for="appId">App ID</label>
           <input
@@ -73,6 +76,7 @@
           <div class="help-text">Your Glide app ID</div>
         </div>
 
+        <!-- 5. Table ID -->
         <div class="form-group">
           <label for="tableId">Table ID</label>
           <input
@@ -84,6 +88,7 @@
           <div class="help-text">Your Glide table ID</div>
         </div>
 
+        <!-- 6. Column Configuration -->
         <div class="form-group">
           <label for="columns">Column Configuration</label>
           <textarea

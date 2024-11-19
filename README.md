@@ -1,72 +1,73 @@
 # Glide API Browser Extension Starter
 
-This is a starter project for building a browser extension that interacts with the Glide API. I hope you use it to build something amazing! I made it because browser extensions are super useful but way too tedious for most to build without some starter code.
+A browser extension that allows you to easily add rows to your Glide tables directly from your browser.
 
-## Features (Coming Soon)
+## Features
 
-- 🔐 Secure storage for Glide API tokens
-- ⚙️ Easy configuration of app and table settings
-- 📝 Table operations:
-  - Add rows
-  - Query data
-  - Update rows
-  - Support for large tables
-- 🎨 Clean, intuitive interface
-- 🛠️ Extensible architecture for community contributions
+- Add rows to Glide tables with a simple form interface
+- Save multiple table configurations
+- Parse Glide table configuration code automatically
+- Secure storage of API tokens
 
-## Getting Started
+## Setup
 
-### Prerequisites
-
-- Node.js (v16 or higher)
-- npm or yarn
-- A Glide account and API token
-
-### Installation
-
-1. Clone this repository:
-   ```bash
-   git clone https://github.com/yourusername/glide-api-browser-extension-starter.git
-   cd glide-api-browser-extension-starter
-   ```
-   
-
-4. Load the extension in Chrome:
-   - Go to `chrome://extensions/`
-   - Enable "Developer mode"
-   - Click "Load unpacked"
-   - Select the `extension/dist` directory
-
-## Configuration
-
-1. Click the extension icon in your browser
-2. Go to Settings
-3. Enter your Glide API credentials:
-   - API Token
-   - App ID
-   - Table ID
-
-## Usage Example
-
-```javascript
-import * as glide from "@glideapps/tables";
-
-const glideTableTable = glide.table({
-    token: "your-token",
-    app: "your-app-id",
-    table: "your-table-id",
-    columns: {
-        name: { type: "string", name: "Name" },
-        description: { type: "string", name: "Description" }
-    }
-});
-
-// Add a new row
-const glideTableID = await glideTableTable.add({
-    name: "New Item",
-    description: "Item description"
-});
+1. Install dependencies:
+```bash
+pnpm install
 ```
+
+2. Run the development server:
+```bash
+pnpm dev
+```
+
+## Usage
+
+1. Click on the extension icon to open the popup
+2. First time? Click "Open Options" to configure your Glide tables
+3. In the options page:
+   - You can paste your Glide table configuration code directly, or
+   - Fill in the fields manually:
+     - Configuration Name (for your reference)
+     - API Token (your Glide API token)
+     - App ID (your Glide app ID)
+     - Table ID (your Glide table ID)
+     - Column Configuration (JSON format of your table columns)
+
+Example column configuration:
+```json
+{
+  "name": {
+    "type": "string",
+    "name": "Name"
+  },
+  "description": {
+    "type": "string",
+    "name": "Description"
+  }
+}
+```
+
+4. Once configured, use the popup to:
+   - Select your saved configuration
+   - Fill in the form fields
+   - Click "Add Row" to submit the data
+
+## Development
+
+This extension is built using:
+- [WXT](https://wxt.dev) - Browser extension framework
+- Vue.js - UI framework
+- @glideapps/tables - Official Glide Tables SDK
+
+## Build
+
+To build the extension for production:
+```bash
+pnpm build
+```
+
+The built extension will be in the `dist` directory.
 
 ## Project Structure
 
