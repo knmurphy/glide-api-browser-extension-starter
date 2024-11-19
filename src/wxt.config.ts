@@ -4,6 +4,7 @@ export default defineConfig({
   manifest: {
     name: 'Glide API Browser Extension',
     description: 'A browser extension for interacting with Glide tables',
+    version: '1.0.0',
     permissions: [
       'storage'
     ],

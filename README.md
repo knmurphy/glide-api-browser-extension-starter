@@ -2,6 +2,25 @@
 
 A browser extension that allows you to easily add rows to your Glide tables directly from your browser.
 
+## Getting Started with this Template
+
+1. Click the "Use this template" button above
+2. Clone your new repository
+3. Navigate to the `src` directory:
+```bash
+cd src
+```
+4. Install dependencies:
+```bash
+pnpm install
+```
+5. Start the development server:
+```bash
+pnpm dev
+```
+
+The extension will be loaded in development mode. You can now make changes to the code and see them reflected in real-time.
+
 ## Features
 
 - Add rows to Glide tables with a simple form interface
@@ -11,15 +30,23 @@ A browser extension that allows you to easily add rows to your Glide tables dire
 
 ## Setup
 
-1. Install dependencies:
+1. Navigate to the `src` directory:
+```bash
+cd src
+```
+
+2. Install dependencies:
 ```bash
 pnpm install
 ```
 
-2. Run the development server:
+3. Run the development server:
 ```bash
+# For Chrome/Edge/Chromium browsers
 pnpm dev
 ```
+
+(Support for Firefox coming soon, I haven't had a chance to test it yet)
 
 ## Usage
 
@@ -56,29 +83,42 @@ Example column configuration:
 ## Development
 
 This extension is built using:
-- [WXT](https://wxt.dev) - Browser extension framework
+- [WXT](https://wxt.dev) - Modern browser extension framework
 - Vue.js - UI framework
 - @glideapps/tables - Official Glide Tables SDK
 
+If you want to avoid having to re-enter the configruation details in the development environment, you can create a file in the `src` directory called `web-ext.config.ts` with the following content:
+```ts
+
+import { defineRunnerConfig } from 'wxt';
+
+export default defineRunnerConfig({
+    chromiumArgs: ['--user-data-dir=./.wxt/chrome-data'],
+});
+```
+
+This will create a Chrome profile and use it for development. Which will preserve your extension options data even if you start or stop the development server. (huge time saver!)
+
 ## Build
 
-To build the extension for production:
+To build the extension for production, from the `src` directory:
 ```bash
+# For Chrome/Edge/Chromium browsers
 pnpm build
 ```
 
-The built extension will be in the `dist` directory.
+The built extension will be in the `.output` directory.
 
 ## Project Structure
 
 ```
-├── src/
-│   ├── popup/           # Extension popup interface
-│   ├── options/         # Settings page
-│   ├── background/      # Background scripts
-│   └── lib/            # Shared utilities
-├── public/             # Static assets
-└── wxt.config.ts      # WXT configuration
+src/
+├── entrypoints/       # Extension entry points (popup, options, background)
+├── components/        # Shared Vue components
+├── lib/              # Shared utilities
+├── assets/           # Static assets
+├── styles/           # Global styles
+└── wxt.config.ts     # WXT configuration
 ```
 
 ## Contributing
@@ -96,5 +136,5 @@ MIT License - feel free to modify and share!
 ## Support
 
 - Report issues on GitHub
-- Join our community discussions
 - Check out the [Glide API documentation](https://docs.glideapps.com/reference/api-introduction)
+- Visit [WXT documentation](https://wxt.dev) for extension development help
