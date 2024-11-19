@@ -37,16 +37,17 @@
       </div>
 
       <div class="form-group">
-        <label for="columns">Table Columns (JSON)</label>
-        <input
+        <label for="columns">Table Columns</label>
+        <textarea
           id="columns"
           v-model="settings.columns"
-          type="text"
-          placeholder='{"name": {"type": "string", "name": "Name"}, "description": {"type": "string", "name": "Description"}}'
-        />
+          rows="6"
+          placeholder="name: { type: 'string', name: 'Name' },
+email: { type: 'string', name: 'Email' },
+age: { type: 'number', name: 'Age' }"
+        ></textarea>
         <div class="help-text">
-          Enter columns as valid JSON with double quotes. Example:<br>
-          {"name": {"type": "string", "name": "Name"}}
+          Enter columns in the format shown above. Valid types are: string, number, boolean, date
         </div>
         <div v-if="columnsError" class="error">
           {{ columnsError }}
@@ -99,40 +100,67 @@ onMounted(async () => {
 const validateColumns = (columnsStr: string): boolean => {
   if (!columnsStr) return true // Empty is valid
   try {
-    console.log('Input:', columnsStr)
-    // Convert the more relaxed format to strict JSON
-    const jsonStr = `{${columnsStr}}`
-    console.log('With braces:', jsonStr)
+    // Remove any outer braces if they exist
+    const trimmed = columnsStr.trim().replace(/^{|}$/g, '').trim()
+    console.log('Trimmed:', trimmed)
+
+    // Split by commas that aren't inside nested objects
+    const columnEntries = trimmed.split(/,(?![^{]*})/g)
+    console.log('Split entries:', columnEntries)
+
+    const columnObj: Record<string, any> = {}
     
-    const withQuotedProps = jsonStr
-      .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')
-    console.log('With quoted props:', withQuotedProps)
-    
-    const cleaned = withQuotedProps
-      .replace(/\s*([{,])\s*/g, '$1')
-    console.log('Cleaned:', cleaned)
-      
-    const parsed = JSON.parse(cleaned)
-    console.log('Parsed:', parsed)
-    
-    if (typeof parsed !== 'object' || parsed === null) {
-      throw new Error('Columns must be an object')
+    for (const entry of columnEntries) {
+      // Skip empty entries
+      if (!entry.trim()) continue
+
+      // Extract key and value
+      const [key, value] = entry.split(/:(?![^{]*})/).map(s => s.trim())
+      if (!key || !value) {
+        throw new Error('Invalid column format')
+      }
+
+      // Clean up the key (remove quotes if present)
+      const cleanKey = key.replace(/^["']|["']$/g, '')
+
+      try {
+        // Try to parse the value as JSON first
+        const parsedValue = JSON.parse(value)
+        columnObj[cleanKey] = parsedValue
+      } catch {
+        // If JSON.parse fails, try to parse the relaxed format
+        const relaxedValue = value
+          .replace(/(['"])?([a-zA-Z0-9_]+)(['"])?:/g, '"$2":')
+          .replace(/'/g, '"')
+        try {
+          columnObj[cleanKey] = JSON.parse(relaxedValue)
+        } catch {
+          throw new Error(`Invalid value format for column "${cleanKey}"`)
+        }
+      }
     }
-    
+
     // Validate the structure of each column
-    for (const [key, value] of Object.entries(parsed)) {
+    for (const [key, value] of Object.entries(columnObj)) {
       if (typeof value !== 'object' || !value.type || !value.name) {
-        columnsError.value = 'Each column must have "type" and "name" properties'
+        columnsError.value = `Column "${key}" must have "type" and "name" properties`
+        return false
+      }
+      
+      // Validate type is one of the allowed values
+      const validTypes = ['string', 'number', 'boolean', 'date']
+      if (!validTypes.includes(value.type)) {
+        columnsError.value = `Column "${key}" has invalid type. Valid types are: ${validTypes.join(', ')}`
         return false
       }
     }
-    
+
     // Store the properly formatted JSON
-    settings.value.columns = JSON.stringify(parsed)
+    settings.value.columns = JSON.stringify(columnObj)
     return true
   } catch (error) {
     console.error('Validation error:', error)
-    columnsError.value = 'Invalid format. Example: name: { type: "string", name: "Name" }'
+    columnsError.value = error instanceof Error ? error.message : 'Invalid format'
     return false
   }
 }
