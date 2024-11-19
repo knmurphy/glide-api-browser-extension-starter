@@ -1,5 +1,51 @@
+<template>
+  <div class="container">
+    <!-- Configuration Selector -->
+    <div class="form-group" v-if="configs.length > 0">
+      <label for="configSelect">Select Configuration</label>
+      <select id="configSelect" v-model="selectedConfigIndex" @change="loadSelectedConfig">
+        <option value="" disabled>Choose a configuration</option>
+        <option v-for="(config, index) in configs" :key="index" :value="index">
+          {{ config.name }}
+        </option>
+      </select>
+    </div>
+
+    <div v-if="!configs.length" class="no-configs">
+      <p>No configurations found. Please add one in the extension options.</p>
+      <button @click="openOptions">Open Options</button>
+    </div>
+
+    <!-- Dynamic Form based on selected configuration -->
+    <form v-if="selectedConfig" @submit.prevent="submitForm" class="add-row-form">
+      <h2>{{ selectedConfig.name }}</h2>
+      
+      <div v-for="(column, key) in parsedColumns" :key="key" class="form-group">
+        <label :for="key">{{ column.name }}</label>
+        <input
+          :id="key"
+          v-model="formData[key]"
+          :type="getInputType(column.type)"
+          :required="true"
+        />
+      </div>
+
+      <div class="button-group">
+        <button type="submit" :disabled="submitting">
+          {{ submitting ? 'Adding...' : 'Add Row' }}
+        </button>
+      </div>
+
+      <div v-if="status" :class="['status', status.type]">
+        {{ status.message }}
+      </div>
+    </form>
+  </div>
+</template>
+
 <script lang="ts" setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { browser } from 'wxt/browser'
 import { GlideApiClient, type GlideTableConfig } from '~/lib/glideApi'
 
 interface ColumnConfig {
@@ -7,187 +53,147 @@ interface ColumnConfig {
   name: string
 }
 
-const columns = ref<Record<string, ColumnConfig>>({})
+const configs = ref([])
+const selectedConfigIndex = ref('')
+const selectedConfig = ref(null)
 const formData = ref<Record<string, any>>({})
-const error = ref<string | null>(null)
-const loading = ref(false)
-const success = ref(false)
+const submitting = ref(false)
+const status = ref(null)
 
-onMounted(async () => {
+const parsedColumns = computed(() => {
+  if (!selectedConfig.value?.columns) return {}
   try {
-    console.log('Popup mounted, fetching settings...');
-    const savedSettings = await chrome.storage.local.get(['apiToken', 'appId', 'tableId', 'columns'])
-    console.log('Saved settings:', {
-      ...savedSettings,
-      apiToken: savedSettings.apiToken ? '***' : undefined,
-      columns: savedSettings.columns || 'not set'
-    });
-
-    if (!savedSettings.columns) {
-      console.log('No columns found in settings');
-      error.value = 'Please configure table columns in extension settings first.'
-      return
-    }
-    
-    console.log('Raw columns string:', savedSettings.columns);
-    columns.value = JSON.parse(savedSettings.columns)
-    console.log('Parsed columns:', columns.value);
-
-    // Initialize form data with empty values
-    formData.value = Object.keys(columns.value).reduce((acc, key) => {
-      const column = columns.value[key]
-      console.log(`Initializing field ${key} with type ${column.type}`);
-      switch (column.type) {
-        case 'boolean':
-          acc[key] = false
-          break
-        case 'number':
-          acc[key] = null
-          break
-        default:
-          acc[key] = ''
-      }
-      return acc
-    }, {} as Record<string, any>)
-    console.log('Initialized form data:', formData.value);
-  } catch (err) {
-    console.error('Error in popup initialization:', err);
-    error.value = 'Failed to load column configuration'
+    return JSON.parse(selectedConfig.value.columns)
+  } catch {
+    return {}
   }
 })
 
+onMounted(async () => {
+  try {
+    console.log('Popup: Loading configs from storage')
+    const result = await browser.storage.local.get('glideConfigs')
+    console.log('Popup: Loaded configs:', result)
+    configs.value = Array.isArray(result.glideConfigs) ? result.glideConfigs : []
+    console.log('Popup: Configs after load:', configs.value)
+  } catch (error) {
+    console.error('Popup: Failed to load configs:', error)
+    configs.value = []
+  }
+
+  // Listen for storage changes
+  browser.storage.onChanged.addListener((changes) => {
+    console.log('Popup: Storage changed:', changes)
+    if (changes.glideConfigs) {
+      configs.value = Array.isArray(changes.glideConfigs.newValue) ? changes.glideConfigs.newValue : []
+      console.log('Popup: Updated configs:', configs.value)
+      
+      // Reset selection if the current config was deleted
+      if (selectedConfig.value && !configs.value.length) {
+        console.log('Popup: Resetting selection due to empty configs')
+        selectedConfig.value = null
+        selectedConfigIndex.value = ''
+      }
+    }
+  })
+})
+
+function loadSelectedConfig() {
+  console.log('Popup: Loading selected config, index:', selectedConfigIndex.value)
+  selectedConfig.value = configs.value[selectedConfigIndex.value]
+  console.log('Popup: Selected config:', selectedConfig.value)
+  formData.value = {}
+  status.value = null
+}
+
 function getInputType(columnType: string): string {
-  switch (columnType) {
-    case 'number':
-      return 'number'
-    case 'boolean':
-      return 'checkbox'
-    case 'date':
-      return 'date'
-    default:
-      return 'text'
+  const typeMap = {
+    string: 'text',
+    number: 'number',
+    date: 'date',
+    boolean: 'checkbox',
+    email: 'email',
+    url: 'url'
+  }
+  return typeMap[columnType] || 'text'
+}
+
+async function submitForm() {
+  submitting.value = true
+  status.value = null
+  
+  try {
+    const config = selectedConfig.value
+    const apiConfig: GlideTableConfig = {
+      apiToken: config.apiKey,
+      appId: config.appId,
+      tableId: config.tableId,
+      columns: parsedColumns.value
+    }
+    
+    const client = new GlideApiClient(apiConfig)
+    await client.addRow(formData.value)
+    
+    status.value = {
+      type: 'success',
+      message: 'Row added successfully!'
+    }
+    
+    // Clear form
+    formData.value = {}
+  } catch (error) {
+    status.value = {
+      type: 'error',
+      message: error.message || 'Failed to add row. Please try again.'
+    }
+  } finally {
+    submitting.value = false
   }
 }
 
-async function handleSubmit() {
-  loading.value = true
-  error.value = null
-  success.value = false
-
-  try {
-    const savedSettings = await chrome.storage.local.get(['apiToken', 'appId', 'tableId', 'columns'])
-    if (!savedSettings.apiToken || !savedSettings.appId || !savedSettings.tableId) {
-      throw new Error('Please configure API settings in extension options first.')
-    }
-
-    console.log('Saved settings:', {
-      ...savedSettings,
-      apiToken: '***' // Hide the token in logs
-    });
-
-    const config: GlideTableConfig = {
-      apiToken: savedSettings.apiToken,
-      appId: savedSettings.appId,
-      tableId: savedSettings.tableId,
-      columns: JSON.parse(savedSettings.columns)
-    }
-
-    console.log('Form data before submission:', formData.value);
-    const client = new GlideApiClient(config)
-    await client.addRow(formData.value)
-    
-    // Reset form on success
-    success.value = true
-    formData.value = Object.keys(columns.value).reduce((acc, key) => {
-      const column = columns.value[key]
-      switch (column.type) {
-        case 'boolean':
-          acc[key] = false
-          break
-        case 'number':
-          acc[key] = null
-          break
-        default:
-          acc[key] = ''
-      }
-      return acc
-    }, {} as Record<string, any>)
-
-    // Clear success message after 3 seconds
-    setTimeout(() => {
-      success.value = false
-    }, 3000)
-  } catch (err) {
-    console.error('Failed to add row:', err)
-    error.value = err instanceof Error ? err.message : 'Failed to add row'
-  } finally {
-    loading.value = false
-  }
+function openOptions() {
+  chrome.runtime.openOptionsPage()
 }
 </script>
 
-<template>
-  <div class="container">
-    <h2>Add New Row</h2>
-    
-    <div v-if="error" class="error">{{ error }}</div>
-    <div v-if="success" class="success">Row added successfully!</div>
-
-    <form v-if="Object.keys(columns).length" @submit.prevent="handleSubmit" class="form">
-      <div v-for="(config, field) in columns" :key="field" class="form-group">
-        <label :for="field">{{ config.name }}</label>
-        <input
-          :id="field"
-          v-model="formData[field]"
-          :type="getInputType(config.type)"
-          :placeholder="config.name"
-          class="form-input"
-        >
-      </div>
-      <button type="submit" class="submit-button" :disabled="loading">
-        {{ loading ? 'Adding...' : 'Add Row in Glide' }}
-      </button>
-    </form>
-
-    <div v-else class="message">
-      Please configure table columns in extension settings first.
-    </div>
-  </div>
-</template>
-
 <style>
-.container {
-  min-width: 320px;
-  max-width: 400px;
-}
-
-.form {
-  display: flex;
-  flex-direction: column;
-  gap: var(--spacing-md);
-}
-
-.error {
-  padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  background-color: rgba(239, 68, 68, 0.1);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  border-radius: 8px;
-  color: var(--error-color);
-}
-
-.success {
-  padding: var(--spacing-sm);
-  margin-bottom: var(--spacing-md);
-  background-color: rgba(34, 197, 94, 0.1);
-  border: 1px solid rgba(34, 197, 94, 0.2);
-  border-radius: 8px;
-  color: var(--success-color);
-}
-
-.message {
+.no-configs {
   text-align: center;
-  color: var(--help-text-color);
-  padding: var(--spacing-md);
+  padding: var(--spacing-lg);
+}
+
+.no-configs p {
+  margin-bottom: var(--spacing-md);
+  color: var(--text-secondary);
+}
+
+select {
+  width: 100%;
+  padding: 0.625rem 0.875rem;
+  border: 1px solid var(--border-color);
+  border-radius: 8px;
+  font-size: var(--text-md);
+  font-family: inherit;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+select:focus {
+  outline: none;
+  border-color: var(--primary-color);
+  box-shadow: var(--shadow-sm), 0 0 0 4px rgba(105, 65, 198, 0.1);
+}
+
+.add-row-form {
+  margin-top: var(--spacing-lg);
+}
+
+@media (prefers-color-scheme: dark) {
+  select {
+    background-color: var(--container-bg-dark);
+    border-color: var(--border-color-dark);
+    color: var(--text-color-light);
+  }
 }
 </style>

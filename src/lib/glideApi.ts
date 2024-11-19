@@ -13,26 +13,36 @@ interface GlideTableConfig {
 }
 
 class GlideApiClient {
-  private table: ReturnType<typeof glide.table>;
+  private apiKey: string;
+  private appId: string;
+  private tableId: string;
+  private baseUrl: string = 'https://api.glideapp.io/api/v1/tables';
 
   constructor(config: GlideTableConfig) {
-    try {
-      this.table = glide.table({
-        token: config.apiToken,
-        app: config.appId,
-        table: config.tableId,
-        columns: config.columns
-      });
-      console.log('Glide table initialized successfully');
-    } catch (error) {
-      console.error('Failed to initialize Glide table:', error);
-      throw error;
-    }
+    this.apiKey = config.apiToken;
+    this.appId = config.appId;
+    this.tableId = config.tableId;
+  }
+
+  private getTableUrl(): string {
+    return `${this.baseUrl}/${this.appId}/${this.tableId}`;
   }
 
   async getRows(options: { limit?: number; offset?: number } = {}) {
     try {
-      return await this.table.get();
+      const response = await fetch(this.getTableUrl(), {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+        },
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to get rows')
+      }
+
+      return await response.json();
     } catch (error) {
       console.error('Failed to get rows:', error);
       throw error;
@@ -46,9 +56,20 @@ class GlideApiClient {
         acc[key] = value === '' ? null : value;
         return acc;
       }, {} as Record<string, any>);
-      const result = await this.table.add(cleanData);
-      console.log('Row added successfully:', result);
-      return result;
+      const response = await fetch(this.getTableUrl(), {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.apiKey}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(cleanData),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.message || 'Failed to add row')
+      }
+      console.log('Row added successfully');
     } catch (error) {
       console.error('Failed to add row:', error);
       throw error;
